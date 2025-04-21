@@ -1,0 +1,17 @@
+{
+    "name": "flux",
+    "version": "1.0.0",
+    "description": "A refined Electron browser with tabs, dark/light mode, history, bookmarks, and ad blocking.",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron ."
+    },
+    "author": "Your Name",
+    "license": "MIT",
+    "devDependencies": {
+        "electron": "latest",
+        "electron-installer-windows": "^3.0.0",
+        "electron-packager": "^17.1.2"
+    },
+    "keywords": []
+}

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+    <meta charset="UTF-8">
+    <title>FLUX</title>
+    
+    <style>
+      :root {
+        --bg-color: #31153f;
+        --nav-bg: #23002d;
+        --text-color: #f0f0f0;
+        --hover: #26013e;
+      }
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+      }
+      /* Tab Bar (Top) */
+      #tabs {
+        display: flex;
+        overflow-x: auto;
+        background-color: var(--nav-bg);
+        padding: 4px 8px;
+      }
+      .tab {
+        display: flex;               /* So we can place the title and close button side by side */
+        align-items: center;
+        max-width: 200px;
+        margin-right: 4px;
+        padding: 6px 10px;            /* Adjust for comfortable spacing */
+        border-radius: 6px;
+        cursor: pointer;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .tab:hover {
+        background-color: var(--hover);
+      }
+      .tab.active {
+        background-color: var(--bg-color);
+      }
+      /* Close Button in Tab */
+      .tab-title {
+        flex: 1;   /* Title grows to fill available space */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .tab-close {
+        margin-left: 8px;
+        background: transparent;
+        border: none;
+        color: var(--text-color);
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .tab-close:hover {
+        color: #ff5555;  /* Red hover color, for example */
+      }
+
+      /* Navigation Bar (Below Tabs) */
+      #nav {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        background-color: var(--nav-bg);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      }
+      #nav-buttons {
+        display: flex;
+        gap: 4px;
+      }
+      #nav button {
+        background: transparent;
+        border: none;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        color: var(--text-color);
+        font-size: 16px;
+        border-radius: 8px;
+      }
+      #nav button:hover {
+        background-color: var(--hover);
+      }
+      #url-container {
+        flex: 1;
+        margin-left: 8px;
+        position: relative;
+      }
+      #url {
+        width: 100%;
+        padding: 8px;
+        border-radius: 16px;
+        border: none;
+        background-color: #31153f;
+        color: var(--text-color);
+        font-size: 14px;
+      }
+      #url:focus {
+        outline: none;
+        background-color: #404040;
+      }
+      #go {
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: var(--text-color);
+        font-size: 14px;
+      }
+      /* Library Button in Nav Bar */
+      #library-button {
+        background: transparent;
+        border: none;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        color: var(--text-color);
+        font-size: 16px;
+        border-radius: 8px;
+        margin-left: 8px;
+      }
+      #library-button:hover {
+        background-color: var(--hover);
+      }
+      /* Small Popup near the Library Button */
+      #library-popup {
+        position: absolute;
+        top: 100px; /* Adjust as needed so it appears near the button */
+        right: 20px;
+        width: 320px;
+        background-color: var(--nav-bg);
+        color: var(--text-color);
+        border: 1px solid #555;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        display: none;
+        z-index: 9999;
+      }
+      /* Internal tabs for History & Bookmarks */
+      #library-tabs {
+        display: flex;
+        border-bottom: 1px solid #555;
+      }
+      #library-tabs button {
+        flex: 1;
+        padding: 8px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: var(--text-color);
+        font-weight: bold;
+      }
+      #library-tabs button:hover {
+        background-color: var(--hover);
+      }
+      .active-tab {
+        background-color: var(--hover);
+      }
+      /* Theme Toggle Button in Popup */
+      #theme-toggle {
+        width: 100%;
+        padding: 8px;
+        border: none;
+        background-color: var(--nav-bg);
+        color: var(--text-color);
+        cursor: pointer;
+        font-size: 14px;
+        border-top: 1px solid #555;
+      }
+      #theme-toggle:hover {
+        background-color: var(--hover);
+      }
+      /* Panels for History & Bookmarks */
+      #history-panel,
+      #bookmarks-panel {
+        padding: 8px;
+        display: none;
+        max-height: 200px; /* For scrolling if content is long */
+        overflow-y: auto;
+      }
+      #history-panel h3,
+      #bookmarks-panel h3 {
+        margin-top: 0;
+      }
+      #history-panel ul,
+      #bookmarks-panel ul {
+        list-style: none;
+        padding: 0;
+      }
+      #history-panel li,
+      #bookmarks-panel li {
+        padding: 4px 0;
+        cursor: pointer;
+      }
+      #history-panel li:hover,
+      #bookmarks-panel li:hover {
+        background-color: var(--hover);
+      }
+      /* Smooth transitions */
+      body, input, button, div {
+        transition: all 0.3s ease;
+      }
+    </style>
+  </head>
+  
+  
+  <body>
+    <!-- Tab Bar (Top) -->
+    <div id="tabs"></div>
+    <!-- Navigation Bar (Below Tabs) -->
+    <div id="nav">
+      <div id="nav-buttons">
+        <button id="back" title="Back"><img src="icons/angle-left.png" alt="Icon" class="icon-class" ></button>
+        <button id="forward" title="Forward"><img src="icons/angle-right.png" alt="Icon" class="icon-class" ></button>
+        <button id="reload" title="Reload"><img src="icons/rotate-right.png" alt="Icon" class="icon-class" ></button>
+        <button id="new-tab" title="New Tab"><img src="icons/plus.png" alt="Icon" class="icon-class" ></button>
+      </div>
+      <div id="url-container">
+        <input id="url" type="text" value="put your URL here">
+        <button id="go" title="Go"><img src="icons/search.png" alt="Icon" class="icon-class" ></button>
+      </div>
+      <!-- Single Library Button -->
+      <button id="library-button" title="History, Bookmarks & Theme">📚</button>
+    </div>
+
+    <!-- Popup (Replaces side panel) -->
+    <div id="library-popup">
+      <!-- Tabs for History & Bookmarks -->
+      <div id="library-tabs">
+        <button id="history-tab">History</button>
+        <button id="bookmarks-tab">Bookmarks</button>
+      </div>
+      <!-- The two sections -->
+      <div id="history-panel">
+        <h3>History</h3>
+        <ul id="history-list"></ul>
+        <button id="clear-history">Clear History</button>
+      </div>
+      <div id="bookmarks-panel">
+        <h3>Bookmarks</h3>
+        <ul id="bookmarks-list"></ul>
+      </div>
+      <!-- Theme toggle at bottom -->
+      <button id="theme-toggle" title="Toggle Light/Dark Mode">Toggle Theme</button>
+    </div>
+
+    <script>
+      /* ---------------------------
+         Element References
+      --------------------------- */
+      const backButton = document.getElementById('back');
+      const forwardButton = document.getElementById('forward');
+      const reloadButton = document.getElementById('reload');
+      const newTabButton = document.getElementById('new-tab');
+      const urlInput = document.getElementById('url');
+      const goButton = document.getElementById('go');
+      const tabsContainer = document.getElementById('tabs');
+      const libraryButton = document.getElementById('library-button');
+      const libraryPopup = document.getElementById('library-popup');
+      const historyTabButton = document.getElementById('history-tab');
+      const bookmarksTabButton = document.getElementById('bookmarks-tab');
+      const themeToggleButton = document.getElementById('theme-toggle');
+      const historyPanel = document.getElementById('history-panel');
+      const bookmarksPanel = document.getElementById('bookmarks-panel');
+      const historyList = document.getElementById('history-list');
+      const bookmarksList = document.getElementById('bookmarks-list');
+      const clearHistoryButton = document.getElementById('clear-history');
+
+      let currentTab = 0;
+
+      /* ---------------------------
+         Navigation Actions
+      --------------------------- */
+      backButton.addEventListener('click', () => window.electronAPI.goBack());
+      forwardButton.addEventListener('click', () => window.electronAPI.goForward());
+      reloadButton.addEventListener('click', () => window.electronAPI.reload());
+      newTabButton.addEventListener('click', () => window.electronAPI.newTab('https://www.google.com'));
+
+      goButton.addEventListener('click', navigateToURL);
+      urlInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') navigateToURL();
+      });
+
+      function navigateToURL() {
+        let url = urlInput.value.trim();
+        if (!url) return;
+        if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
+        window.electronAPI.navigate({ id: currentTab, url });
+      }
+
+      /* ---------------------------
+         Tab Management
+      --------------------------- */
+      function addTabUI(id, titleOrUrl) {
+        // Create the tab container
+        const tab = document.createElement('div');
+        tab.classList.add('tab');
+        tab.dataset.id = id;
+
+        // Create a span for the tab's title
+        const titleSpan = document.createElement('span');
+        titleSpan.classList.add('tab-title');
+        titleSpan.textContent = titleOrUrl;
+        // Switch tab on title click
+        titleSpan.addEventListener('click', () => switchTab(id));
+        tab.appendChild(titleSpan);
+
+        // Create a close button
+        const closeBtn = document.createElement('button');
+        closeBtn.classList.add('tab-close');
+        closeBtn.textContent = '×'; // or 'X'
+        closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation(); // prevent switching to this tab
+          window.electronAPI.closeTab(id);
+          tab.remove();
+        });
+        tab.appendChild(closeBtn);
+
+        // Add the tab to the container
+        tabsContainer.appendChild(tab);
+        updateTabUIActiveState();
+      }
+
+      function switchTab(id) {
+        currentTab = id;
+        window.electronAPI.switchTab(id);
+        updateTabUIActiveState();
+      }
+
+      function updateTabUIActiveState() {
+        const allTabs = tabsContainer.querySelectorAll('.tab');
+        allTabs.forEach(tab => {
+          const tabId = parseInt(tab.dataset.id, 10);
+          tab.classList.toggle('active', tabId === currentTab);
+        });
+      }
+
+      /* ---------------------------
+         Popup for History & Bookmarks & Theme
+      --------------------------- */
+      // Toggle popup on library button click
+      libraryButton.addEventListener('click', () => {
+        libraryPopup.style.display = (libraryPopup.style.display === 'block') ? 'none' : 'block';
+      });
+
+      // Switch between History and Bookmarks
+      historyTabButton.addEventListener('click', showHistoryTab);
+      bookmarksTabButton.addEventListener('click', showBookmarksTab);
+
+      function showHistoryTab() {
+        historyTabButton.classList.add('active-tab');
+        bookmarksTabButton.classList.remove('active-tab');
+        historyPanel.style.display = 'block';
+        bookmarksPanel.style.display = 'none';
+      }
+
+      function showBookmarksTab() {
+        bookmarksTabButton.classList.add('active-tab');
+        historyTabButton.classList.remove('active-tab');
+        bookmarksPanel.style.display = 'block';
+        historyPanel.style.display = 'none';
+      }
+
+      // Clear history
+      clearHistoryButton.addEventListener('click', () => {
+        window.electronAPI.clearHistory();
+      });
+
+      // Theme toggle
+      themeToggleButton.addEventListener('click', () => {
+        window.electronAPI.toggleDarkMode();
+      });
+
+      // Default to History tab
+      showHistoryTab();
+
+      /* ---------------------------
+         IPC Event Listeners
+      --------------------------- */
+      window.electronAPI.onUrlChanged((event, data) => {
+        if (data.id === currentTab) {
+          urlInput.value = data.url;
+        }
+      });
+
+      window.electronAPI.onTabAdded((event, data) => {
+        addTabUI(data.id, data.url);
+      });
+
+      window.electronAPI.onTabRemoved((event, id) => {
+        const tab = tabsContainer.querySelector(`[data-id='${id}']`);
+        if (tab) tab.remove();
+        updateTabUIActiveState();
+      });
+
+      window.electronAPI.onTabTitleUpdated((event, data) => {
+        const tab = tabsContainer.querySelector(`[data-id='${data.id}'] .tab-title`);
+        if (tab) {
+          tab.textContent = data.title;
+        }
+      });
+
+      // Dark Mode toggled => update CSS variables
+      window.electronAPI.onDarkModeToggled((event, enabled) => {
+        document.documentElement.style.setProperty('--bg-color', enabled ? '#ffffff' : '#1a1a1a');
+        document.documentElement.style.setProperty('--nav-bg', enabled ? '#e0e0e0' : '#2a2a2a');
+        document.documentElement.style.setProperty('--text-color', enabled ? '#000000' : '#f0f0f0');
+        document.documentElement.style.setProperty('--hover', enabled ? '#d0d0d0' : '#3a3a3a');
+        themeToggleButton.textContent = enabled ? 'Switch to Dark Mode' : 'Switch to Light Mode';
+      });
+
+      // History cleared => empty the list
+      window.electronAPI.onHistoryCleared(() => {
+        historyList.innerHTML = '';
+      });
+
+      // Bookmarks updated => rebuild the bookmarks list
+      window.electronAPI.onBookmarkAdded((event, bms) => {
+        rebuildBookmarksList(bms);
+      });
+      window.electronAPI.onBookmarkRemoved((event, bms) => {
+        rebuildBookmarksList(bms);
+      });
+
+      function rebuildBookmarksList(bookmarks) {
+        bookmarksList.innerHTML = '';
+        bookmarks.forEach(url => {
+          const li = document.createElement('li');
+          li.textContent = url;
+          li.addEventListener('click', () => {
+            window.electronAPI.navigate({ id: currentTab, url });
+          });
+          li.addEventListener('contextmenu', () => {
+            window.electronAPI.removeBookmark(url);
+          });
+          bookmarksList.appendChild(li);
+        });
+      }
+
+      /* ---------------------------
+         Initial Load
+      --------------------------- */
+      libraryPopup.style.display = 'none';
+
+      // Fetch existing bookmarks & history on startup
+      window.electronAPI.getBookmarks().then((bms) => {
+        rebuildBookmarksList(bms);
+      });
+
+      window.electronAPI.getHistory().then((hist) => {
+        historyList.innerHTML = '';
+        hist.forEach(url => {
+          const li = document.createElement('li');
+          li.textContent = url;
+          li.addEventListener('click', () => {
+            window.electronAPI.navigate({ id: currentTab, url });
+          });
+          historyList.appendChild(li);
+        });
+      });
+    </script>
+  </body>
+</html>
